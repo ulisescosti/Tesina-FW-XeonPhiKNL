@@ -1,0 +1,236 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <floyd_warshal.h>
+#include <APSP_ADT.h>
+#include <test_graphs.h>
+#include <args_parser.h>
+#include <omp.h>
+
+//#define PROB 70
+
+//Para testing
+void die(char* str){
+	printf("%s\n",str);
+	exit(0);
+}
+
+//Algoritmo "confiable" a ejecutar cuando se necesita comparar las matrices resultantes.
+void referenceFloydWarshall(t_APSP_graph* G, int t){
+    INT64 i, j, k, i_disp, k_disp, n;
+    TYPE dij, dik, dkj, sum;
+	omp_set_num_threads(t);
+	n = G->n;
+	
+	#pragma omp parallel private(k,k_disp,i,i_disp,dik,j,dij,dkj,sum) firstprivate(G)
+	{
+		for(k=0; k<n; k++){
+		    k_disp = k*n;
+			#pragma omp for
+		    for(i=0; i<n; i++){
+		//    	if(i == k)
+		 //   		continue;
+		        i_disp = i*n;
+		        dik = G->D[i_disp+k];
+		        for(j=0; j<n; j++){
+		 //       	if( (j == k) || (j == i) )
+		 //       		continue;
+		            dij = G->D[i_disp+j];
+		            dkj = G->D[k_disp+j];
+		            sum = dik + dkj;
+		            if(sum < dij){
+		                G->D[i_disp+j] = sum;
+		                G->P[i_disp+j] = k;
+		            }
+		        }
+		    }
+		}
+	}
+}
+
+double getExecTime(double startTime, double endTime){
+	return endTime - startTime;
+}
+
+double getGFlops(double startTime, double endTime, int n){
+	double N = (double)n; //Porque si n es muy grande -> n*n*n se pasa de 2^31.. y ya que el resultado debe ser double, no tiene tanto sentido poner INT64
+	return ((N*N*N*2)/(endTime - startTime))/1000000000;
+}
+
+void printTimeResults(double startTime, double endTime, int n, int printCsvResult){
+	double execTime, gFlops;
+	execTime = getExecTime(startTime, endTime);
+	gFlops = getGFlops(startTime, endTime, n);
+	
+	if(printCsvResult){
+		printf("%.2f;%.4f\n", execTime, gFlops);
+	} else {
+		printf("Resultados de la prueba: %.1lf segs, %.3lf GFlops\n", execTime, gFlops);
+	}
+}
+
+double dwalltime(){
+	double sec;
+	struct timeval tv;
+
+	gettimeofday(&tv,NULL);
+	sec = tv.tv_sec + tv.tv_usec/1000000.0;
+	return sec;
+}
+
+char* getFailMsg(int status){
+	switch(status){
+		case 1: return "Grafo de distancias: OK. Grafo de rutas: Fail.";
+		case 2: return "Grafo de distancias: Fail. Grafo de rutas: OK.";
+		case 3: return "Grafo de distancias: Fail. Grafo de rutas: Fail.";
+		default:{
+			printf("El estado '%d' no es valido\n", status);
+			exit(1);
+		}
+	}
+}
+
+//Compara ambos "registros resultado". Imprime si son iguales o no. En caso negativo ademas imprime en cuales grafos se diferencian.
+void printResultStatus(t_APSP_graph* graphToCheck, t_APSP_graph* referenceGraph){
+	int result = APSP_graph_equals(graphToCheck, referenceGraph);
+	if(result == 0){
+		printf("Resultado correcto!\n");
+	} else {
+		printf("********** Resultado incorrecto! **********\n");
+		printf("%s\n", getFailMsg(result));
+	}
+}
+
+void runReferenceTest(TYPE* inputGraph, t_APSP_graph* gReference, int n, int t){
+	double startTime, endTime;
+	printf("Preparando grafos en memoria . . .\n");
+	APSP_graph_new(gReference, n, 0);
+	
+//	APSP_graph_init(gReference, inputGraph);
+	APSP_import_distance_graph(gReference, inputGraph);
+	APSP_init_path_graph(gReference);
+	
+	printf("Ejecutando Floyd Warshal de referencia . . .\n");
+	startTime = dwalltime();
+	referenceFloydWarshall(gReference, t);
+	endTime = dwalltime();
+	printf("Ejecucion finalizada. ");
+	printTimeResults(startTime, endTime, gReference->n, 0);
+}
+
+void runCustomTest(TYPE* inputGraph, t_APSP_graph* referenceGraph, int n, int bs, int t, int checkResult, int printCsvRes, int gd){
+	t_APSP_graph G;
+	double startTime, endTime;
+	
+	if(!printCsvRes){
+		printf("Inicializando grafo de entrada . . .\n");
+	}
+	APSP_graph_new(&G, n, bs);
+	if(!checkResult){
+		initInputGraph(G.D, bs, n, gd); //Se inicializa el grafo de entrada directamente sobre la matriz D
+	} else {
+		APSP_import_distance_graph(&G, inputGraph); //Se copia la matriz de entrada, a D.
+	}
+	
+	if(!printCsvRes){
+		printf("Preparando matriz P en memoria . . .\n");
+	}
+	APSP_init_path_graph(&G);
+	
+	if(!printCsvRes){
+		printf("Ejecutando Floyd Warshal %s (%s). . .\n", getFloydVersion(), getFloydName());
+	}
+	startTime = dwalltime();
+	floydWarshall(G.D, G.P, n, bs, t);
+	endTime = dwalltime();
+	if(!printCsvRes){
+		printf("Ejecucion finalizada. ");
+	}
+	printTimeResults(startTime, endTime, G.n, printCsvRes);
+	if(checkResult){
+		printResultStatus(&G, referenceGraph);
+	}
+	APSP_graph_destroy(&G);
+}
+
+void run(ProgramArgs* pArgs){
+	int bs;
+	INT64 n = pArgs->n;
+	TYPE* inputGraph; //Grafo de entrada.
+	t_APSP_graph gReference; //Donde se vuelcan los resultados del algoritmo de referencia (el "confiable"). Luego se utiliza para compararlo con el resultado del algoritmo "no confiable" (cuando está todavía inmaduro en etapa de desarrollo).
+
+	if(versionImplementsBlocking()){
+		bs = pArgs->bs;
+	} else {
+		bs = 0;
+	}
+	if(pArgs->options.checkResult){
+		if(!pArgs->options.printCsvResult){
+			printf("Inicializando grafo de entrada . . .\n");
+		}
+		inputGraph = (TYPE*)abs_malloc((INT64)n*(INT64)n*sizeof(TYPE));
+		initInputGraph(inputGraph, 0, n, pArgs->gd);
+		runReferenceTest(inputGraph, &gReference, n, pArgs->t);
+	} else {
+		inputGraph = NULL;
+	}
+	runCustomTest(inputGraph, &gReference, n, bs, pArgs->t, pArgs->options.checkResult, pArgs->options.printCsvResult, pArgs->gd);
+
+	if(pArgs->options.checkResult){
+		abs_free(inputGraph);
+		APSP_graph_destroy(&gReference);
+	}
+}
+
+
+//Para probar la constante PROB
+void asd(){
+	int n = 16;
+	TYPE* inputGraph;
+	
+	inputGraph = (TYPE*)aligned_alloc(MEM_ALIGN, n*n*sizeof(TYPE));
+	initInputGraph(inputGraph, 0, n, 70);
+	
+	printTYPEGraph(inputGraph, n);
+}
+
+/*
+void qwe(int n, int bs, int gd){
+	int* g1;
+	TYPE* g2;
+	g1 = (int*)abs_malloc((INT64)n*(INT64)n*sizeof(TYPE));
+	g2 = (TYPE*)abs_malloc((INT64)n*(INT64)n*sizeof(TYPE));
+	
+	
+	t_APSP_graph G;
+	APSP_graph_new(&G, n, bs);
+	initInputGraph(G.D, bs, n, gd);
+	TYPEGraphFromBlocksToRows(g2, G.D, n, bs);
+	printf("Distancias:\n");
+	printTYPEGraph(g2, n);
+	
+	APSP_init_path_graph(&G);
+	intGraphFromBlocksToRows(g1, G.P, n, bs);
+	printf("Caminos:\n");
+	printIntGraph(g1, n);
+	
+	abs_free(g1);
+	abs_free(g2);
+	APSP_graph_destroy(&G);
+}
+*/
+int main(int argc, char* argv[]){
+/*	ProgramArgs pArgs;
+	loadDefaultOptions(&pArgs.options);
+	parseProgramArgs(&pArgs, argc, argv);
+	validateProgramArgs(&pArgs, versionImplementsBlocking(), versionIsParallel());
+	if(!pArgs.options.printCsvResult){
+		printProgramArgs(&pArgs, versionImplementsBlocking(), versionIsParallel());
+		printExtraInfo(&pArgs, sizeof(TYPE));
+	}
+	run(&pArgs);*/
+//	qwe(16, 4, 70);
+	asd();
+	return 0;
+}
