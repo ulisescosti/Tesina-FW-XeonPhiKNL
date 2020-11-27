@@ -11,12 +11,12 @@
 #define N_MAX 65536
 //#define N_MAX 16768
 
-#define N_COUNT 1
-const int n_array[N_COUNT] = {4096};
+#define N_COUNT 3
+const int n_array[N_COUNT] = {4096, 8192, 16384};
 //const int n_array[N_COUNT] = {4096, 8192, 16384, 32768, 65536};
 
-#define BS_COUNT 2
-const int bs_array[BS_COUNT] = {0, 256};
+#define BS_COUNT 4
+const int bs_array[BS_COUNT] = {0, 64, 128,256};
 
 
 void initInputGraphStandard(TYPE* inputGraph, int n, int GD){
@@ -42,7 +42,7 @@ void initInputGraphStandard(TYPE* inputGraph, int n, int GD){
 	} 
 }
 
-//Copia el grafo B ordenado por filas (estandar) al grafo A ordenado por bloques. Grafos de tipo TYPE.
+//It copies the graph B, ordered by rows (standard) to graph A, ordered by blocks. Graphs of type TYPE.
 void graphFromRowsToBlocks(TYPE* A, TYPE* B, int n, int bs){
 	INT64 I,J,i,j,blockSize,r;
 	r = n/bs;
@@ -53,31 +53,21 @@ void graphFromRowsToBlocks(TYPE* A, TYPE* B, int n, int bs){
 				for(j=0; j<bs; j++)
 					A[I*n*bs+J*blockSize+i*bs+j] = B[I*n*bs+J*bs+i*n+j];
 }
-/*
-void initInputGraph(TYPE* auxGraph, TYPE* inputGraph, int n, int bs){
-	srand(1);	
-	if(bs == 0){
-		initInputGraphStandard(inputGraph, n, GRAPH_DENSITY);
-	} else {
-		initInputGraphStandard(auxGraph, n, GRAPH_DENSITY);
-		graphFromRowsToBlocks(inputGraph, auxGraph, n, bs);
-	}
-}
-*/
+
 void saveGraphToFile(void* graph, int n, char* fullname, int sizeOfType){
 	size_t writtenNumbers;
 	FILE* file = fopen(fullname,"wb");
 	if(file == NULL){
-		printf ("Error al abrir el archivo: %s\n", strerror(errno));
-		printf("Ruta: \"%s\"\n", fullname);
+		printf ("Error while reading the file: %s\n", strerror(errno));
+		printf("Path: \"%s\"\n", fullname);
 		exit(1);
 	}
 	writtenNumbers = fwrite(graph, sizeOfType, (INT64)n*(INT64)n, file);
 	
 	if(writtenNumbers != (INT64)n*(INT64)n){
-		printf("No se escribió la cantidad esperada de numeros en el archivo (escritos=%ld esperados=%ld)\n", writtenNumbers, (INT64)n*(INT64)n);
+		printf("The program could not write the expected amount of numbers in the file (written=%ld expected=%ld)\n", writtenNumbers, (INT64)n*(INT64)n);
 		if(ferror(file))
-			perror( "Error writing file" );
+			perror( "Error while writing the file" );
 		exit(1);
 	}
 	fclose(file);
@@ -86,9 +76,9 @@ void saveGraphToFile(void* graph, int n, char* fullname, int sizeOfType){
 void saveInputGraphToFile(TYPE* graph, int n, int bs){
 	char fullname[255];
 	sprintf(fullname, "%s/%s/N%d-BS%d", FILES_FOLDER, INPUT_FILES_FOLDER, n, bs);
-	printf("    Guardando matriz de entrada (N=%d, BS=%d) en archivo . . . ", n, bs);
+	printf("    Saving the input matrix (N=%d, BS=%d) to disk . . . ", n, bs);
 	saveGraphToFile(graph, n, fullname, sizeof(TYPE));
-	printf("Hecho\n");
+	printf("Done\n");
 }
 
 void generateInputGraphs(){
@@ -99,19 +89,19 @@ void generateInputGraphs(){
 	
 
 	for(i=0; i<N_COUNT; i++){
-		printf("Generacion de grafo de entrada (N=%d):\n", n_array[i]);
-		printf("    Inicializando grafo de entrada . . .");
+		printf("Creation of input graph (N=%d):\n", n_array[i]);
+		printf("    Initializing input graph . . .");
 		initInputGraphStandard(inputGraph, n_array[i], GRAPH_DENSITY);
-		printf("Hecho\n");
+		printf("Done\n");
 		for(j=0; j<BS_COUNT; j++){
-			printf("    Reordenando matriz a bloques (BS=%d) . . .", bs_array[j]);
+			printf("    Reordering matrix to blocks (BS=%d) . . .", bs_array[j]);
 			if(bs_array[j] == 0){
 				auxPtr = inputGraph;
 			} else {
 				graphFromRowsToBlocks(blockedGraph, inputGraph, n_array[i], bs_array[j]);
 				auxPtr = blockedGraph;
 			}
-			printf("Hecho\n");
+			printf("Done\n");
 	/*		if(j==1){
 				printTYPEGraphPartially(inputGraph, n_array[i], 32);
 				printf("\n");
@@ -134,33 +124,33 @@ void generateInputGraphs(){
 void saveReferenceResultDistanceGraphToFile(TYPE* refDistGraph, int n){
 	char fullname[255];
 	sprintf(fullname,"%s/%s/dist-N%d", FILES_FOLDER, REFERENCE_FILES_FOLDER, n);
-	printf("    Guardando matriz D de referencia (N=%d) en archivo . . . ", n);
+	printf("    Saving the D reference matrix (N=%d) to disk . . . ", n);
 	saveGraphToFile(refDistGraph, n, fullname, sizeof(TYPE));
-	printf("Hecho\n");
+	printf("Done\n");
 }
 
 //Public
 void saveReferenceResultPathGraphToFile(int* refPathGraph, int n){
 	char fullname[255];
 	sprintf(fullname,"%s/%s/path-N%d", FILES_FOLDER, REFERENCE_FILES_FOLDER, n);
-	printf("    Guardando matriz P de referencia (N=%d) en archivo . . . ", n);
+	printf("    Saving the P reference matrix (N=%d) to disk . . . ", n);
 	saveGraphToFile(refPathGraph, n, fullname, sizeof(int));
-	printf("Hecho\n");
+	printf("Done\n");
 }
 
 void runReferenceFW(t_APSP_graph* gReference, int t){
-	printf("Generacion de grafos de resultados de referencia (N=%d):\n", gReference->n);
-	printf("    Cargando matriz de adyacencia desde disco . . . ");
+	printf("Creation of reference result graphs (N=%d):\n", gReference->n);
+	printf("    Loading adjacency matrix from disk . . . ");
 	readInputGraphFromFile(gReference->D, gReference->n, 0);
-	printf("Hecho\n");
+	printf("Done\n");
 	#ifndef NO_PATH
-		printf("    Preparando matriz P en memoria . . . ");
+		printf("    Preparing P matrix in memory . . . ");
 		APSP_init_path_graph(gReference);
-		printf("Hecho\n");
+		printf("Done\n");
 	#endif
-	printf("    Ejecutando FW de referencia (N=%d): . . . ", gReference->n);
+	printf("    Executing reference FW (N=%d): . . . ", gReference->n);
 	floydWarshall(gReference->D, gReference->P, gReference->n, t);
-	printf("Hecho\n");
+	printf("Done\n");
 }
 
 void generateReferenceResultMatrices(int t){
@@ -176,7 +166,7 @@ void generateReferenceResultMatrices(int t){
 			saveReferenceResultPathGraphToFile(gRef.P, n_array[i]);
 		#endif
 	}
-	printf("Se han generado las matrices de referencia satisfactoriamente\n");
+	printf("Reference matrices have been generated successfully\n");
 //	APSP_graph_destroy(&gRef);
 }
 
@@ -187,17 +177,18 @@ void generateReferenceResultMatrices(int t){
 
 int main(int argc, char* argv[]){
 	char* str;
-	setvbuf(stdout, NULL, _IONBF, 0); //Desactiva el buffering automatico de stdout (para que no se espere el \n antes de imprimir cada linea)
+	//This disables the automatic buffering of stdout (so the program does not wait the \n before printing each line)
+	setvbuf(stdout, NULL, _IONBF, 0);
 	if(argc > 1){
 		str = argv[1];
 		if( (strcmp(str, "-checkRes") == 0) || (strcmp(str, "-CR") == 0) ){
 			if(argc > 2){
 				generateReferenceResultMatrices(atoi(argv[2]));
 			} else {
-				printf("Falta el parametro T\n");
+				printf("The argument 'T' is missing\n");
 			}
 		} else {
-			printf("No se reconoce el parametro recibido\n");
+			printf("Unable to recognise the received argument\n");
 		}
 	} else {
 		generateInputGraphs();

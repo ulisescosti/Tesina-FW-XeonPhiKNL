@@ -3,7 +3,7 @@
 
 //Public
 char* getFloydName(){
-	return "con vectorizacion utilizando SSE";
+	return "with vectorization using SSE";
 }
 
 //Public

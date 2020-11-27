@@ -9,7 +9,7 @@ char* getFloydName(){
 
 //Public
 char* getFloydVersion(){
-	return "secuencial \"naive\"";
+	return "\"naive\" sequential";
 }
 
 //Public

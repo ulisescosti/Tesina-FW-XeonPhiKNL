@@ -1,0 +1,7 @@
+/asm/*
+/bin/*
+/input/files/*
+/input/input_files_generator
+/input/input_files_generator.o
+/obj/*
+/output/proc_output

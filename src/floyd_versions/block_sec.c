@@ -4,7 +4,7 @@
 
 //Public
 char* getFloydName(){
-	return "secuencial con bloques";
+	return "sequential with blocks";
 }
 
 //Public
@@ -31,7 +31,7 @@ static inline void FW_BLOCK(TYPE* const graph, const INT64 d1, const INT64 d2, c
 	INT64 i, j, k, i_disp, i_disp_d1, k_disp, k_disp_d3;
 	TYPE dij, dik, dkj, sum;
 
-	for(k=0; k<BS; k++){ //This BS is a const. Not the BS argument.
+	for(k=0; k<BS; k++){
 		k_disp = k*BS;
 		k_disp_d3 = k_disp + d3;
 		for(i=0; i<BS; i++){
@@ -55,7 +55,7 @@ static inline void FW_BLOCK(TYPE* const graph, const INT64 d1, const INT64 d2, c
 
 //Public
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void floydWarshall(TYPE* D, int* P, int n, int t){ //t es ignorado, solo se mantiene para "estandarizar" los argumentos de todas las funciones floyd
+void floydWarshall(TYPE* D, int* P, int n, int t){ //'t' is ignored in this case (since this is a single threaded version). It stays here only to "standardize" the arguments of each FW function
 	INT64 i, j, k, r, b, kj, ik, kk, ij, row_of_blocks_disp, block_size, k_row_disp, k_col_disp, i_row_disp, j_col_disp;
 	
 	r = n/BS;
@@ -67,11 +67,11 @@ void floydWarshall(TYPE* D, int* P, int n, int t){ //t es ignorado, solo se mant
 		k_row_disp = k*row_of_blocks_disp;
 		k_col_disp = k*block_size;
 		
-		//Fase 1
+		//Phase 1
 		kk = k_row_disp + k_col_disp;
 		FW_BLOCK(D, kk, kk, kk, P, b);
 		
-		//Fase 2
+		//Phase 2
 		for(j=0; j<r; j++){
 			if(j == k)
 		        continue;
@@ -79,7 +79,7 @@ void floydWarshall(TYPE* D, int* P, int n, int t){ //t es ignorado, solo se mant
 			FW_BLOCK(D, kj, kk, kj, P, b);
 		}
 		
-		//Fase 3
+		//Phase 3
 		for(i=0; i<r; i++){
 			if(i == k)
 		        continue;
@@ -87,7 +87,7 @@ void floydWarshall(TYPE* D, int* P, int n, int t){ //t es ignorado, solo se mant
 			FW_BLOCK(D, ik, ik, kk, P, b);
 		}
 		
-		//Fase 4
+		//Phase 4
 		for(i=0; i<r; i++){
 		    if(i == k)
 				continue;

@@ -1,8 +1,6 @@
-CC = gcc
-#CC = icc
-
-#Descomentar la siguiente linea si no se quiere pasar por parametro el BS al Makefile
-#BS = 256
+#Leave uncommented the appropriate line according to the compiler
+#CC = gcc
+CC = icc
 
 EXE_DIR = bin/BS-$(BS)
 SRC_DIR = src
@@ -13,30 +11,34 @@ FLOYD_OBJ_DIR = $(OBJ_DIR)/$(FLOYD_FOLDER)
 FLOYD_SRC_DIR = $(SRC_DIR)/$(FLOYD_FOLDER)
 INPUT_FILES_GEN = $(INPUT_DIR)/input_files_generator
 
-#Flags cuando se usa GCC
-OMP_FLAG = -fopenmp
-AVX2_FLAG = -mavx2
+#Flags when GCC is used
+#OMP_FLAG = -fopenmp
+#AVX2_FLAG = -mavx2
 #AVX512_FLAG = -mavx512f
-AVX512_FLAG = -mavx2
-INTEL_ARC =
+#INTEL_ARC =
 
-#Flags cuando se usa ICC
-#OMP_FLAG = -qopenmp
-#AVX2_FLAG = -xAVX2
-#AVX512_FLAG = -xMIC-AVX512
-#INTEL_ARC = -DINTEL_ARC=y
+#Flags when ICC is used
+OMP_FLAG = -qopenmp
+AVX2_FLAG = -xAVX2
+AVX512_FLAG = -xMIC-AVX512
+INTEL_ARC = -DINTEL_ARC=y
 
+#Choose the SIMD registers width
 #Intel-MIC-arc= 512, default=256
-SIMD_WIDTH = 256
+SIMD_WIDTH = 512
 SIMD_WIDTH_FLAG = -DSIMD_WIDTH=$(SIMD_WIDTH)
+
+#Insert the data type size (eg 32 for float, 64 for double)
 TYPE_SIZE = 32
 TYPE_SIZE_FLAG = -DTYPE_SIZE=$(TYPE_SIZE)
 MEM_ALIGN_FLAG = -DMEM_ALIGN=SIMD_WIDTH/8 #Divided by byte
-#UNROLL_FACTOR_FLAG = -DUNROLL_FACTOR=BS/(SIMD_WIDTH/TYPE_SIZE)
+
 BS_FLAG = -DBS=$(BS)
+
+#Uncomment the next line if you want to omit the P matrix compute. Leave it commented if you actually want to compute it.
 #NO_PATH = -DNO_PATH=y
 
-#$(UNROLL_FACTOR_FLAG)
+
 NAIVESEC_CFLAGS =
 NAIVEPAR_CFLAGS =
 BLOCK_SEC_CFLAGS =
@@ -48,7 +50,6 @@ OPT5_CFLAGS = $(OPT4_CFLAGS)
 OPT6_CFLAGS = $(OPT5_CFLAGS)
 OPT7_8_CFLAGS = $(OPT6_CFLAGS)
 EXT_EXP_CFLAGS = $(OPT7_8_CFLAGS)
-#-fp-model fast=2
 
 V_NAIVE_SEC = naive_sec
 V_NAIVE_PAR = naive_par
@@ -68,14 +69,11 @@ EXE = $(VERS:%=$(EXE_DIR)/%)
 SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-#Para el clean
+#Needed for the clean
 FLOYD_OBJ = $(wildcard $(FLOYD_OBJ_DIR)/*.o)
 
-# -march=native
 CFLAGS += -Iinclude -O3 -Wall -Wextra -std=c11 $(INTEL_ARC) $(OMP_FLAG) $(MEM_ALIGN_FLAG) $(NO_PATH) $(BS_FLAG) $(SIMD_WIDTH_FLAG) $(TYPE_SIZE_FLAG)
-#-falign-functions=32 -falign-loops=32
 LDFLAGS += $(OMP_FLAG)
-#LDLIBS += -lm
 
 .PHONY: all clean
 
@@ -96,6 +94,9 @@ $(EXE_DIR)/%: $(OBJ) $(FLOYD_OBJ_DIR)/%.o
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+
+#On the following lines, uncomment the ending '.asm' lines if you want to generate the corresponding assembler. Leave them commented for better compiling time performance
 
 $(FLOYD_OBJ_DIR)/$(V_NAIVE_SEC).o: $(FLOYD_SRC_DIR)/$(V_NAIVE_SEC).c
 #	$(CC) $(CFLAGS) $(NAIVESEC_CFLAGS) -S $< -o asm/$(V_NAIVE_SEC).asm
@@ -141,8 +142,5 @@ $(FLOYD_OBJ_DIR)/$(V_EXT_EXP).o: $(FLOYD_SRC_DIR)/$(V_EXT_EXP).c
 #	$(CC) $(CFLAGS) $(EXT_EXP_CFLAGS) -S $< -o asm/$(V_EXT_EXP).asm
 	$(CC) $(CFLAGS) $(EXT_EXP_CFLAGS) -c $< -o $@
 
-#-qopt-report=5
-
 clean:
 	$(RM) $(OBJ) $(FLOYD_OBJ) $(INPUT_FILES_GEN).o
-	

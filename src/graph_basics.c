@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//Comparacion plana. Grafos de tipo TYPE.
+//Flat comparison. For graphs of type TYPE.
 //Public
 int TYPEGraphsEquals(TYPE* A, TYPE* B, int n){
 	int vectorLength = n*n;
@@ -12,7 +12,7 @@ int TYPEGraphsEquals(TYPE* A, TYPE* B, int n){
 	return 1;
 }
 
-//Comparacion plana. Grafos de tipo int.
+//Flat comparison. For graphs of type int.
 //Public
 int intGraphsEquals(int* A, int* B, int n){
 	int vectorLength = n*n;
@@ -22,7 +22,7 @@ int intGraphsEquals(int* A, int* B, int n){
 	return 1;
 }
 
-//Comparacion custom. A ordenado por bloques, B ordenado por filas (estandar). Grafos de tipo TYPE.
+//Custom comparison. A ordered by blocks, B ordered by rows (standard). Graphs of type TYPE.
 //Public
 int TYPEGraphsWBlocksEquals(TYPE* A, TYPE* B, int n){ 
 	int I,J,i,j,blockSize,r;
@@ -78,15 +78,8 @@ static void getVertexIndexes(VertexIndexes* indexes, int vIdx){
 	indexes->x = vIdx%BS;
 }
 
-/*
-void printCompositeIndex(CompositeIndex* c){
-    printf("I=%d i=%d J=%d j=%d\n", c->I, c->i, c->J, c->j);
-}
-*/
-
-
-//Analiza si el camino P[idx] tiene efectivamente la distancia definida en D[idx]
-//P ordenado por bloques, D ordenado por filas (estandar)
+//Analyze if the path P[idx] actually has the minimum distance stored in D[idx]
+//P ordered by blocks, D ordered by rows (standard)
 //Private
 static int isEquivalentPath(int* P, int idx, TYPE* D, int n){
 	int vAct, vNext, w, blockSize, dist, idxNoBlocking;
@@ -120,7 +113,7 @@ static int isEquivalentPath(int* P, int idx, TYPE* D, int n){
 	return ( (w<n) && (dist == D[idxNoBlocking]) );
 }
 
-//Comparacion custom. A ordenado por bloques, B ordenado por filas (estandar). Grafos de tipo int. "distRef" es el grafo de distancias minimas de referencia.
+//Custom comparison. A ordered by blocks, B ordered by rows (standard). Graphs of type int. "distRef" is the reference graph of minimum distances.
 //Public
 int intGraphsWBlocksEquals(int* A, int* B, int n, TYPE* distRef){
 	int I,J,i,j,blockSize,r;
@@ -136,7 +129,7 @@ int intGraphsWBlocksEquals(int* A, int* B, int n, TYPE* distRef){
 	return 1;
 }
 
-//Copia plana. Grafos de tipo TYPE.
+//Flat copy. For graphs of type TYPE.
 //Public
 void copyTYPEGraph(TYPE* A, TYPE* B, int n){
     INT64 i, vectorLength;
@@ -145,7 +138,7 @@ void copyTYPEGraph(TYPE* A, TYPE* B, int n){
         A[i] = B[i];
 }
 
-//Copia plana. Grafos de tipo int.
+//Flat copy. For graphs of type int.
 //Public
 void copyIntGraph(int* A, int* B, int n){
     INT64 i, vectorLength;
@@ -154,7 +147,7 @@ void copyIntGraph(int* A, int* B, int n){
         A[i] = B[i];
 }
 
-//Copia el grafo B ordenado por filas (estandar) al grafo A ordenado por bloques. Grafos de tipo TYPE.
+//It copies the graph B, ordered by rows (standard) to graph A, ordered by blocks. Graphs of type TYPE.
 //Public
 void TYPEGraphFromRowsToBlocks(TYPE* A, TYPE* B, int n){
 	INT64 I,J,i,j,blockSize,r;
@@ -167,7 +160,7 @@ void TYPEGraphFromRowsToBlocks(TYPE* A, TYPE* B, int n){
 					A[I*n*BS+J*blockSize+i*BS+j] = B[I*n*BS+J*BS+i*n+j];
 }
 
-//Copia el grafo B ordenado por filas (estandar) al grafo A ordenado por bloques. Grafos de tipo int.
+//It copies the graph B, ordered by rows (standard) to graph A, ordered by blocks. Graphs of type int.
 //Public
 void intGraphFromRowsToBlocks(int* A, int* B, int n){
 	INT64 I,J,i,j,blockSize,r;
@@ -180,7 +173,7 @@ void intGraphFromRowsToBlocks(int* A, int* B, int n){
 					A[I*n*BS+J*blockSize+i*BS+j] = B[I*n*BS+J*BS+i*n+j];
 }
 
-//Copia el grafo B ordenado por bloques al grafo A ordenado por filas (estandar). Grafos de tipo TYPE.
+//It copies the graph B, ordered by blocks to graph A, ordered by rows (standard). Graphs of type TYPE.
 //Public
 void TYPEGraphFromBlocksToRows(TYPE* A, TYPE* B, int n){
 	INT64 I,J,i,j,blockSize,r;
@@ -193,7 +186,7 @@ void TYPEGraphFromBlocksToRows(TYPE* A, TYPE* B, int n){
 					A[I*n*BS+J*BS+i*n+j] = B[I*n*BS+J*blockSize+i*BS+j];
 }
 
-//Copia el grafo B ordenado por bloques al grafo A ordenado por filas (estandar). Grafos de tipo int.
+//It copies the graph B, ordered by blocks to graph A, ordered by rows (standard). Graphs of type int.
 //Public
 void intGraphFromBlocksToRows(int* A, int* B, int n){
 	INT64 I,J,i,j,blockSize,r;

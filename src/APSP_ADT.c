@@ -1,11 +1,10 @@
 #include <APSP_ADT.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <floyd_warshal.h> //Lo incluye solo por la funcion abs_malloc()
-//#include <test_graphs.h>
+#include <floyd_warshal.h> //This file includes it just to use the function abs_malloc()
 #include <graph_basics.h>
 
-//Reserva en memoria espacio para el grafo de distancias y el de caminos
+//Allocs memory for D and P graphs
 //Public
 void APSP_graph_new(t_APSP_graph* G, int n, int implementsBlocking){
 	G->D = (TYPE*)abs_malloc((INT64)n*(INT64)n*sizeof(TYPE));
@@ -18,7 +17,7 @@ void APSP_graph_new(t_APSP_graph* G, int n, int implementsBlocking){
 	G->n = n;
 }
 
-//Libera la memoria
+//Memory free
 //Public
 void APSP_graph_destroy(t_APSP_graph* G){
     abs_free(G->D);
@@ -27,7 +26,7 @@ void APSP_graph_destroy(t_APSP_graph* G){
 	#endif
 }
 
-//Inicializa el grafo de reconstruccion de caminos minimos, ordenado por filas (estandar).
+//It initializes the P graph, ordered by rows (standard)
 //Private
 static void initNotBlockedPathGraph(t_APSP_graph* G){
 	for(INT64 i=0; i<G->n; i++)
@@ -38,20 +37,20 @@ static void initNotBlockedPathGraph(t_APSP_graph* G){
     			G->P[i*G->n+j] = -1;
 }
 
-//Inicializa el grafo de reconstruccion de caminos minimos, ordenado por bloques.
+//It initializes the P graph, ordered by blocks
 //Private
 static void initBlockedPathGraph(t_APSP_graph* G){
 	INT64 I,J,i,j,blockSize,r,idx;
 	r = G->n/BS;
-	blockSize = BS*BS; //blockSize = Block size total, es decir, la cantidad de elementos totales que contiene un bloque teniendo en cuenta sus dos dimensiones
+	blockSize = BS*BS;
 	for(I=0; I<r; I++){
 		for(J=0; J<r; J++){
 			for(i=0; i<BS; i++){
 				for(j=0; j<BS; j++){
-				    //I*n*BS = offset de toda la fila I de bloques
-				    //J*blockSize = offset del bloque J dentro de la fila de bloques I
-				    //i*BS = offset de la fila i dentro del bloque J de la fila de bloques I
-				    //j = elemento dentro de la fila i del bloque J de la fila de bloques I
+				    //I*n*BS = offset of the entire row of blocks number I
+				    //J*blockSize = offset of block J inside the row of blocks I
+				    //i*BS = offset of row i inside the block J of the row of blocks I
+				    //j = position inside the row i of the block J of the row of blocks I
 					idx = I*G->n*BS+J*blockSize+i*BS+j;					
 					if(G->D[idx] != INFINITE)
 						G->P[idx] = J*BS+j;
@@ -62,16 +61,7 @@ static void initBlockedPathGraph(t_APSP_graph* G){
 		}
 	}
 }
-/*
-//Public
-void APSP_import_distance_graph(t_APSP_graph* G, TYPE* inputGraph){
-	if(G->bs == 0){
-		copyTYPEGraph(G->D, inputGraph, G->n);
-	} else {
-		TYPEGraphFromRowsToBlocks(G->D, inputGraph, G->n, G->bs);
-	}
-}
-*/
+
 //Public
 void APSP_init_path_graph(t_APSP_graph* G){
 	if(G->implementsBlocking){
@@ -81,17 +71,8 @@ void APSP_init_path_graph(t_APSP_graph* G){
 	}
 }
 
-//Inicializa el grafo de distancias y el de caminos: Copia inputGraph en G->D e inicializa G->P.
-//G puede estar o no ordenado por bloques. inputGraph debe estar ordenado por filas (estandar).
-//Public
-/*
-void APSP_graph_init(t_APSP_graph* G, TYPE* inputGraph){
-	initDistanceGraph(G, inputGraph);
-	initPathGraph(G);
-}
-*/
-//Compara los grafos de 'A' con los de 'B'. Si son iguales entonces retorna 0, sino retorna 1, 2 o 3 segun cuales son los grafos que presentan diferencias (ver en el codigo).
-//'A' puede estar ordenado por bloques, pero 'B' NO.
+//It compares the graphs of 'A' and 'B'. If they are equal, it returns 0, else, it returns 1, 2 or 3, depending on which graphs have diferences.
+//'A' could be ordered by blocks, but not 'B'.
 //Public
 int APSP_graph_equals(t_APSP_graph* A, t_APSP_graph* B){
 	int distanceGraphOK;

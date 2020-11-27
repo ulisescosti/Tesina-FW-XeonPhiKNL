@@ -98,13 +98,8 @@ class CsvResultRegenerator{
 	private:
 		vector<ExecutionResults*> testsResults;
 		
-/*		void supressSemicolon(string& str){
-			str[str.length()-1] = '\0'; //Se pisa con null el ultimo caracter del string (el que sería el punto y coma en el CSV)
-		}*/
 		void readLn(string& str){
 			getline(cin, str);
-	//		cout << "String= "+str << endl;
-	//		supressSemicolon(str);
 		}
 		void writeLn(string str){
 			cout << str <<  endl;
@@ -132,14 +127,12 @@ class CsvResultRegenerator{
 
 			do{
 				readLn(inputStr);
-		/*		cout << "String= "+result << endl;
-				exit(0);*/
-			}while(!cin.eof() && (inputStr == "")); //Para limpiar todas las filas vacias que puedan venir al principio
-		//	En este punto el inputStr tiene cargado el titulo 1 (descartable)
-			while(!cin.eof() && (inputStr != "")){ //!cin.eof() esta al pedo aca y en el while interno.. no tiene efecto ni escribiendo en consola ni pasando un archivo.
+			}while(!cin.eof() && (inputStr == "")); //This cleans all empty lines that could be found at the beginning.
+			// At this point, the variable inputStr has loaded the title 1 (disposable)
+			while(!cin.eof() && (inputStr != "")){ //!cin.eof() is not working here nor in the internal while. Comparing nputStr with empty string is enough.
 				er = new ExecutionResults();
 				readLn(params);
-				readLn(inputStr); //Titulo 2 (descartable)
+				readLn(inputStr); //Title 2 (disposable)
 				readLn(inputStr); //Test result
 				er->setParams(params);
 				while( !cin.eof() && (inputStr != "") && !endOfTest(inputStr) ){

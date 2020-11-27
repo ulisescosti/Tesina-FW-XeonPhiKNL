@@ -6,19 +6,21 @@ readonly SUMMARY_FILE="output/summary.csv"
 readonly OUTPUT_PROCCESOR="output/proc_output"
 readonly OPTIONS="-PC"
 
-MCDRAM="numactl -p 1 "
-#MCDRAM=""
+#If you want to use the MCDRAM, then leave the next line uncommented.
+#MCDRAM="numactl -p 1 "
+#If you do not want to use the MCDRAM, comment the previous line and uncomment the following one.
+MCDRAM=""
 
-#VERSION="extra_exp"
-VERSION="opt_4"
-VOLLEY_SIZE=3
+VERSION="opt_7_8"
+
+#Feel free to modify these two globals on the run_tests() function
+VOLLEY_SIZE=3 #Ammount of tests to execute (repeat) with the same arguments
 N=4096
 
-
+#It receives two arguments: BS and T
 function runTestVolley(){
 	BS=$1
 	T=$2
-#	GD=$3
 	ARGS="$N $T $OPTIONS"
 	echo "Version;N;BS;T" >> $OUT_FILE
 	echo $VERSION";"$N";"$BS";"$T >> $OUT_FILE
@@ -32,9 +34,9 @@ function runTestVolley(){
 function setDatetimeFile(){
 	if [ $1 == "START" ]
 	then
-		echo "Hora de comienzo de script:" >> $TIME_FILE
+		echo "Script start time:" >> $TIME_FILE
 	else
-		echo "Hora de fin de script:" >> $TIME_FILE
+		echo "Script end time:" >> $TIME_FILE
 	fi
 	date +"%d/%m/%y %H:%M" >> $TIME_FILE
 }
@@ -59,9 +61,12 @@ function testAllParams(){
 	runTestVolley 256 256
 }
 
+#Feel free to modify this function
 function run_tests(){
-#	export KMP_AFFINITY=granularity=fine,balanced
-
+	export KMP_AFFINITY=granularity=fine,balanced
+	
+	N=4096
+	VOLLEY_SIZE=3
 	testAllParams
 	
 : <<'END'
@@ -71,23 +76,23 @@ function run_tests(){
 	
 	N=16384
 	VOLLEY_SIZE=5
-        testAllParams
+    testAllParams
 
 	N=32768
 	VOLLEY_SIZE=3
     testAllParams
 
-	N=65536
-	VOLLEY_SIZE=3
-	runTestVolley 32 64
-	runTestVolley 64 64
-	runTestVolley 128 64
-	runTestVolley 32 128
-	runTestVolley 64 128
-	runTestVolley 128 128
-	VOLLEY_SIZE=1
-	runTestVolley 256 128
-	runTestVolley 256 64
+#	N=65536
+#	VOLLEY_SIZE=3
+#	runTestVolley 32 64
+#	runTestVolley 64 64
+#	runTestVolley 128 64
+#	runTestVolley 32 128
+#	runTestVolley 64 128
+#	runTestVolley 128 128
+#	VOLLEY_SIZE=1
+#	runTestVolley 256 128
+#	runTestVolley 256 64
 END
 }
 

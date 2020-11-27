@@ -12,15 +12,15 @@ static void readGraphFromFile(void* inputGraph, int n, char* fullname, int sizeO
 	
 	FILE* file = fopen(fullname,"rb");
 	if(file == NULL){
-		printf ("Error al abrir el archivo de entrada\n");
-		printf("Ruta: \"%s\"\n", fullname);
+		printf ("An error occurred while opening the input file\n");
+		printf("Path: \"%s\"\n", fullname);
 		printf("%s\n", strerror(errno));
 		exit(1);
 	}
 	readNumbers = fread(inputGraph, sizeOfType, (INT64)n*(INT64)n, file);
 	
 	if(readNumbers != (INT64)n*(INT64)n){
-		printf("No se leyo la cantidad esperada de numeros del archivo (leida=%ld esperada=%ld)\n", readNumbers, (INT64)n*(INT64)n);
+		printf("Could not read the expected amount of numbers in the file (read=%ld expected=%ld)\n", readNumbers, (INT64)n*(INT64)n);
 		if(ferror(file))
 			perror( "Error reading file" );
 		exit(1);
@@ -48,16 +48,6 @@ void readReferenceResultPathGraphFromFile(int* refPathGraph, int n){
 	sprintf(fullname,"%s/%s/path-N%d", FILES_FOLDER, REFERENCE_FILES_FOLDER, n);
 	readGraphFromFile(refPathGraph, n, fullname, sizeof(int));
 }
-
-/*
-//Public
-void initInputGraph(TYPE* inputGraph, int bs, int n, int gd){
-	srand(1);
-	if(bs == 0)
-		initInputGraphStandard(inputGraph, n, gd);
-	else
-		initInputGraphBlocked(inputGraph, bs, n, gd);
-}*/
 
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -96,33 +86,6 @@ void printTYPEGraphPartially(TYPE* graph, int n, int section){
 	printf("\n");
 }
 
-//Public
-/*
-void printIntGraphPartially(int* graph, int n, int section, ){
-	int* gAux;
-	if(bs != 0){
-		gAux = (int*)aligned_alloc(MEM_ALIGN, (INT64)n*(INT64)n*sizeof(int));
-		intGraphFromBlocksToRows(gAux, graph, n, bs);
-		printIntRowGraphPartially(gAux, n, section);
-		free(gAux);
-	} else {
-		printIntRowGraphPartially(graph, n, section);
-	}
-}
-
-//Public
-void printTYPEGraphPartially(TYPE* graph, int n, int bs, int section){
-	TYPE* gAux;
-	if(bs != 0){
-		gAux = (TYPE*)aligned_alloc(MEM_ALIGN, (INT64)n*(INT64)n*sizeof(TYPE));
-		TYPEGraphFromBlocksToRows(gAux, graph, n, bs);
-		printTYPERowGraphPartially(gAux, n, section);
-		free(gAux);
-	} else {
-		printTYPERowGraphPartially(graph, n, section);
-	}
-}
-*/
 //Public
 void printIntGraph(int* graph, int n){
 	printIntGraphPartially(graph, n, n);

@@ -10,7 +10,7 @@ char* getFloydName(){
 
 //Public
 char* getFloydVersion(){
-	return "paralelo \"naive\"";
+	return "\"naive\" parallel";
 }
 
 //Public

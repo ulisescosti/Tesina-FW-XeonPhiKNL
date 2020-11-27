@@ -3,7 +3,7 @@
 
 //Public
 char* getFloydName(){
-	return "con vectorizacion utilizando AVX2";
+	return "with vectorization using AVX2";
 }
 
 //Public

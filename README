@@ -12,7 +12,7 @@ Sections:
 
 A. Preparing and configuring the project for compiling:
     1. Open the Makefile with a text editor and adjust its parameters as you need:
-        1.1 Choose between ICC and GCC (or set it for whatever compiler you want).
+        1.1 In the lines 2 and 3, choose between ICC and GCC (or set it for whatever compiler you want).
         1.2 Among the lines 14 and 24 you have the flags that depend on the compiler. For example, if you choose ICC, leave the GCC flags commented, and vice versa.
         1.3 In line 28 you have to choose the width of the SIMD registers. Leave 512 for Xeon Phi KNL.
         1.4 In line 32 you have to set the data type length. Eg, 32 for int and float, 64 for long and double.
@@ -64,4 +64,6 @@ D. Executing the project:
             NOTE: If the executable "/output/proc_output" does not work, then try recompiling it (-std=c++11 flag needed).
             2.2.3: One txt with the script start time and end time: "output/script_time.txt"
             
+Now at this point you know how to configure, compile and execute the project.
+Thank you for using and trying it. 
     

@@ -5,7 +5,7 @@
 
 //Public
 char* getFloydName(){
-	return "paralelo con bloques";
+	return "parallel with blocks";
 }
 
 //Public
@@ -23,7 +23,7 @@ static inline void FW_BLOCK(TYPE* const graph, const INT64 d1, const INT64 d2, c
 	INT64 i, j, k, i_disp, i_disp_d1, k_disp, k_disp_d3;
 	TYPE dij, dik, dkj, sum;
 
-	for(k=0; k<BS; k++){ //This BS is a const. Not the BS argument.
+	for(k=0; k<BS; k++){
 		k_disp = k*BS;
 		k_disp_d3 = k_disp + d3;
 		for(i=0; i<BS; i++){
@@ -91,20 +91,20 @@ void floydWarshall(TYPE* D, int* P, int n, int t){
 			k_row_disp = k*row_of_blocks_disp;
 			k_col_disp = k*num_of_bock_elems;
 
-			//Fase 1
+			//Phase 1
 			kk = k_row_disp + k_col_disp;
 			FW_BLOCK_PARALLEL(D, kk, kk, kk, P, b);
 
-			//Fase 2 y 3
+			//Phase 2 y 3
 			#pragma omp for schedule(dynamic)
 			for(w=0; w<r*2; w++){
-				if(w<r){ //Fase 2
+				if(w<r){ //Phase 2
 					j = w;
 					if(j == k)
 						continue;
 					kj = k_row_disp + j*num_of_bock_elems;
 					FW_BLOCK(D, kj, kk, kj, P, b);
-				} else { //Fase 3
+				} else { //Phase 3
 					i = w - r;
 					if(i == k)
 						continue;
@@ -113,7 +113,7 @@ void floydWarshall(TYPE* D, int* P, int n, int t){
 				}
 			}
 
-			//Fase 4
+			//Phase 4
 			#pragma omp for collapse(2) schedule(dynamic)
 			for(i=0; i<r; i++){
 				for(j=0; j<r; j++){
