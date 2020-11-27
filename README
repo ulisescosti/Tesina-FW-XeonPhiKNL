@@ -1,0 +1,67 @@
+First of all, if you just want to see/copy the code of the Floyd-Warshall function of this implementation for Intel Xeon Phi Knights Landing, you can find it in the following path: "/src/floyd_versions/opt_7_8.c".
+If you want to re-use and/or execute the code of the entire project (including batch processing of tests, etc), then keep reading this file.
+
+
+This is a simple guide for compiling and executing the Floyd-Warshall solution for Xeon Phi Knights Landing of this work.
+
+Sections:
+   A. Preparing and configuring the project for compiling
+   B. Compiling the project
+   C. Generating the input graphs
+   D. Executing tests
+
+A. Preparing and configuring the project for compiling:
+    1. Open the Makefile with a text editor and adjust its parameters as you need:
+        1.1 Choose between ICC and GCC (or set it for whatever compiler you want).
+        1.2 Among the lines 14 and 24 you have the flags that depend on the compiler. For example, if you choose ICC, leave the GCC flags commented, and vice versa.
+        1.3 In line 28 you have to choose the width of the SIMD registers. Leave 512 for Xeon Phi KNL.
+        1.4 In line 32 you have to set the data type length. Eg, 32 for int and float, 64 for long and double.
+        1.5 If you want to omit the compute of the P (minimum paths) matrix, uncomment the line 39.
+        
+    2. Edit the macros of the file "/include/defs.h" as you need:
+        2.1 In line 4 choose the data type that will be used for the adjacency matrix and the minimum distance matrix.
+        2.2 In line 11 choose the graph density you want, from 0 to 100 (percentage).
+        
+    3. Edit the file "/input/input_files_generator.c":
+        3.1 In line 16 you have to fill up the array with the N values that you want to test. Always use powers of 2 (4096, 8192, etc).
+        IMPORTANT: This will be used to generate the inpute matrices and storing them on disk. Big N values involve very big files on disk. Eg, for N=65536, with data type float, the corresponding input file would occupy 16 GB.
+        3.2 Once you filled it up, set the N_COUNT macro (line 15) with the number of elements of the "n_array".
+        3.3 You have to do the same with the "bs_array" (line 29). Fill it up with the BS values that you want to test. Again, always use powers of 2 (32, 64, etc). The value 0 in this case means "without blocking". For example, "bs_array[BS_COUNT] = {0, 128, 256}" means that you want to generate an input graph using a BS of 128, another one for 256, and finally, an input graph that is not ordered by blocks.
+        IMPORTANT: This will involve on generating an input graph for every BS, and for every N. For example, "n_array[N_COUNT] = {4096, 8192, 16384, 32768, 65536}" and "bs_array[BS_COUNT] = {0, 128, 256}" will involve generating 15 input graphs.
+        3.4 Do not forget to update the "BS_COUNT" macro (line 28) after editing the "bs_array". Again, set it with the number of elements of the "bs_array".
+    
+    4. Edit the file "compile_with_bs":
+        4.1 Edit the line 3 filling up the array with the BS values that you want to compile for.
+        NOTE: Make sure that each corresponding folder is created at /bin path. For example, if you want to compile for BS=128 and 256, then in /bin should be the folders BS-128 and BS-256.
+     
+        
+B. Compiling the project:
+	1. Run "./compile_with_bs.sh"
+
+
+C. Generating the input graphs:
+	1. Run "./input/input_files_generator" to generate the input graphs and storing them on disk. 
+	2. [Optional] Run again the same program, but this time with an optional argument: -checkRes (or -CR) which tells the program to execute a "trusted" Floyd-Warshall for each input graph (already generated on the previous step), and then store the results (D and P matrices) on disk. These result matrices will be used later, right after executing some tests, where the user wants to compare the results of the optimized (untrusted) algorithm with the results of the trusted one. If this optional flag is used, then you need to pass another argument, the T arg, which indicates the number of threads to be used with the "trusted" FW.
+
+D. Executing the project:
+    1. To run a single test:
+        1.1 Execute directly the corresponding binary file. Eg, if you want to execute a test with BS=128 and level of optimization 8, use the following executable: "/bin/BS-128/opt_7_8". The program arguments are as follows:
+            1.1.1: N (side length of the input matrix)
+            1.1.2: T (number of threads)
+            1.1.3: [optional] -CR/-checkRes (put one of those two flags if you want to check the results with the "trusted" Floyd-Warshall algorithm (if you use this flag, make sure you already have executed the step C.2))
+            1.1.4: [optional] -PC/-printCsvRes (put one of those two flags if you want to print the results in a CSV format)        
+        1.2 For example, for executing a test with the following parameters: N=16384, BS=64, T=128, version="Opt-6", and printing the results in csv format, you can use the following command: "./bin/BS-64/opt_6 16384 128 -PC".
+        
+    2. To run a batch of tests:
+        2.1 Open up the "run_mixed_volley.sh" file, and edit the following:
+        	2.1.1: Comment or uncomment lines 10 and 12 depending on whether you want to use the MCDRAM or not.
+            2.1.2: Set the executable file name of the corresponding algorithm to run (line 12). For example, "opt_5" for optimization level 5.
+            2.1.3: Feel free to modify the "run_tests" function.
+            
+        2.2 The results of a batch proccesing are stored in two CSV files and one txt file:
+            2.2.1: One CSV with the raw results: "/output/result.csv"
+            2.2.2: The other CSV with the summary of the results (averages and coeficient of variation automatically calculated): "/output/summary.csv"
+            NOTE: If the executable "/output/proc_output" does not work, then try recompiling it (-std=c++11 flag needed).
+            2.2.3: One txt with the script start time and end time: "output/script_time.txt"
+            
+    
